@@ -1,8 +1,8 @@
-# 🏛️ SQL Data Warehouse on PostgreSQL — Medallion + Star Schema
+# 🏛️ SQL Data Warehouse on PostgreSQL: Medallion + Star Schema
 
 > A classic SQL data warehouse built entirely in PostgreSQL: raw CRM + ERP extracts land in a
 > bronze layer, are cleaned and conformed in silver by PL/pgSQL procedures, and are served as a
-> Kimball star schema in gold — with 18 fail-loud quality checks between the layers.
+> Kimball star schema in gold, with 18 fail-loud quality checks between the layers.
 > **One command reproduces everything:** `./run_all.sh`.
 
 ```mermaid
@@ -48,15 +48,15 @@ flowchart LR
 ## 🎯 Context
 
 Before dbt and lakehouses, most analytics ran on exactly this: a relational warehouse loaded by
-SQL procedures. It is still everywhere — and warehouse fundamentals (layered loading, conformed
+SQL procedures. It is still everywhere, and warehouse fundamentals (layered loading, conformed
 dimensions, surrogate keys, quality gates) transfer directly to any modern stack. This project
 builds that classic warehouse end-to-end in pure SQL, on PostgreSQL, with engineering discipline:
-idempotent loads, declared grain, and checks that fail when they should — and it proves each of
+idempotent loads, declared grain, and checks that fail when they should. It proves each of
 those claims with a reproducible run.
 
 ## ❓ Business Problem
 
-Sales data lives in two disconnected systems — a CRM (customers, products, sales transactions)
+Sales data lives in two disconnected systems: a CRM (customers, products, sales transactions)
 and an ERP (customer demographics, locations, product categories). Nobody can answer *"which
 product categories drive revenue, by customer segment and geography?"* without manually stitching
 CSV exports. The warehouse integrates both sources into one dimensional model that answers
@@ -68,14 +68,14 @@ Medallion architecture implemented as three PostgreSQL schemas in one database:
 
 | Layer | What happens | Objects |
 | --- | --- | --- |
-| **bronze** | Raw CSVs loaded as-is with `COPY` (truncate-and-load, idempotent). No transformation — a faithful, auditable copy. | 6 tables |
-| **silver** | `CALL silver.load_silver()` — PL/pgSQL cleansing: trim, type, dedupe, decode coded values, fix invalid dates, enforce `sales = quantity × price`. Every rule is commented with the data problem it fixes. | 6 tables + audit column |
+| **bronze** | Raw CSVs loaded as-is with `COPY` (truncate-and-load, idempotent). No transformation: a faithful, auditable copy. | 6 tables |
+| **silver** | `CALL silver.load_silver()` runs the PL/pgSQL cleansing: trim, type, dedupe, decode coded values, fix invalid dates, enforce `sales = quantity × price`. Every rule is commented with the data problem it fixes. | 6 tables + audit column |
 | **gold** | Business-ready **star schema** as views: `dim_customers`, `dim_products`, `fact_sales` (grain: one row per order line), surrogate keys, CRM↔ERP integration resolved. | 3 views |
-| **quality gates** | 13 silver + 5 gold checks that `RAISE EXCEPTION` on violation — the pipeline stops, the load is not "done". | 2 scripts |
+| **quality gates** | 13 silver + 5 gold checks that `RAISE EXCEPTION` on violation, stopping the pipeline: the load is not "done". | 2 scripts |
 
 ## 📦 Data
 
-Six CSV extracts from two simulated source systems (AdventureWorks-derived, MIT-licensed — see
+Six CSV extracts from two simulated source systems (AdventureWorks-derived, MIT-licensed, see
 [Acknowledgments](#-acknowledgments)):
 
 | Source | File | Rows | Content |
@@ -91,7 +91,7 @@ Six CSV extracts from two simulated source systems (AdventureWorks-derived, MIT-
 
 All numbers below come from query output on the built warehouse, not from console summaries.
 
-**Row lineage — nothing lost by accident, everything lost by rule:**
+**Row lineage (nothing lost by accident, everything lost by rule):**
 
 | Stage | Rows | Why |
 | --- | --- | --- |
@@ -103,44 +103,44 @@ All numbers below come from query output on the built warehouse, not from consol
 | `bronze.crm_sales_details` | 60,398 | = CSV data rows |
 | `gold.fact_sales` | 60,398 | grain preserved end-to-end (gate G04) |
 
-**Quality gates:** 13 silver checks + 5 gold checks, all passing — including revenue
+**Quality gates:** 13 silver checks + 5 gold checks, all passing, including revenue
 reconciliation across layers (G05: gold Σ`sales_amount` = silver Σ`sls_sales` = **29,356,250**).
 
 **Idempotency, proven:** running `CALL bronze.load_bronze()` + `CALL silver.load_silver()` a
 second time yields identical counts on all 12 tables and both gates green.
 
 **The gates actually fail:** inserting one duplicate `cst_id` into silver makes the gate abort
-with `ERROR: S01 FAIL: 1 duplicate/null cst_id` — a gate that cannot fail is not a gate.
+with `ERROR: S01 FAIL: 1 duplicate/null cst_id`. A gate that cannot fail is not a gate.
 
 ## 🔍 Methodology
 
 Kimball dimensional modeling over medallion layering:
 
-1. **Declare the grain first** — `fact_sales` = one row per order line — before writing any SQL.
+1. **Declare the grain first** (`fact_sales` = one row per order line) before writing any SQL.
 2. **Bronze** with `COPY`, truncate-and-load, so re-runs are idempotent by construction.
-3. **Silver procedures** — every cleansing rule commented with the *why*: the CRM re-inserts
+3. **Silver procedures**: every cleansing rule commented with the *why*: the CRM re-inserts
    customers on update (dedupe keeps the latest), sales dates arrive as `YYYYMMDD` integers
    (0 and malformed become `NULL`, not fake dates), `sales ≠ quantity × price` gets recomputed
    from the trustworthy pair.
-4. **Gold views** — surrogate keys via `ROW_NUMBER()` with deterministic ordering; CRM is the
+4. **Gold views**: surrogate keys via `ROW_NUMBER()` with deterministic ordering; CRM is the
    master for shared attributes (gender), ERP fills the gaps.
-5. **Number-to-number validation between layers** — row counts and revenue sums must reconcile
+5. **Number-to-number validation between layers**: row counts and revenue sums must reconcile
    exactly (gates G04/G05), not "look right".
 
 ## 🤔 Design Decisions
 
 - **PostgreSQL instead of SQL Server** (the original inspiration uses T-SQL): runs natively on
-  Linux/Docker, zero licensing friction — and rebuilding the logic in another dialect proves
+  Linux/Docker, zero licensing friction, and rebuilding the logic in another dialect proves
   understanding rather than transcription (`BULK INSERT`→`COPY`, `GETDATE()`→`now()`,
   `ISNULL`→`COALESCE`, dynamic `EXECUTE format()` for the data-driven bronze loader).
 - **Schemas as layers** in one database instead of separate databases: cross-layer
   reconciliation queries stay trivial; isolation is by grant, not by connection.
-- **Stored procedures for ETL** — deliberately classic: the point is mastering warehouse loading
+- **Stored procedures for ETL**, deliberately classic: the point is mastering warehouse loading
   in pure SQL. Orchestrated ETL is covered elsewhere in this portfolio (Airflow in DE-01, dbt in
   AE-01).
 - **Gold as views** over silver: nothing to drift out of date; materialize only if volume demands.
 - **Fail-loud quality gates** (`RAISE EXCEPTION`) instead of inspection queries: with
-  `ON_ERROR_STOP`, a violation stops the pipeline — checks are enforcement, not decoration.
+  `ON_ERROR_STOP`, a violation stops the pipeline. Checks are enforcement, not decoration.
 
 ## 🛠️ Tech Stack
 
@@ -175,7 +175,7 @@ Kimball dimensional modeling over medallion layering:
 
 ## ⚙️ How to Reproduce
 
-Requirements: Docker with the Compose plugin. Nothing else — no local Postgres, no Python.
+Requirements: Docker with the Compose plugin. Nothing else: no local Postgres, no Python.
 
 ```bash
 git clone https://github.com/andrematiello/DE-06-postgres-data-warehouse.git
@@ -200,11 +200,11 @@ From `scripts/analytics/sales_analyses.sql`, on the built warehouse:
   orders from **2010-12-29** to **2014-01-28**.
 - **Bikes are the business**: 96.5% of revenue (28.3M) from 15,205 units; Accessories move more
   than twice the units (36,112) for just 2.4% of revenue.
-- Every one of the **top 10 products by revenue is a bike** — Mountain-200 and Road-150 variants
+- Every one of the **top 10 products by revenue is a bike**: Mountain-200 and Road-150 variants
   (the leader alone: 1,373,454).
 - The **United States leads in total revenue** (9.16M) but **Australia monetizes 2× better per
   customer** (2,523 vs 1,224 revenue/customer).
-- **2013 is the peak year** (16.3M — more than half of all revenue), 2014 has January only.
+- **2013 is the peak year** (16.3M, more than half of all revenue), 2014 has January only.
 
 ## 🚀 Next Steps
 
@@ -217,6 +217,6 @@ From `scripts/analytics/sales_analyses.sql`, on the built warehouse:
 Architecture and source datasets from the excellent
 [SQL Data Warehouse Project](https://github.com/DataWithBaraa/sql-data-warehouse-project) by
 **Baraa Khatib Salkini** (Data With Baraa), MIT-licensed. This repository is an independent
-rebuild on PostgreSQL — same warehouse design goals, different engine, own code and decisions
-(PL/pgSQL loader, fail-loud quality gates, reconciliation checks, one-command reproduction) —
+rebuild on PostgreSQL: same warehouse design goals, different engine, own code and decisions
+(PL/pgSQL loader, fail-loud quality gates, reconciliation checks, one-command reproduction),
 not a fork of the original T-SQL code.

@@ -4,7 +4,7 @@ Quality Checks: Silver Layer
 ===============================================================================
 Purpose:
     Gate between silver and gold. Every check RAISES AN EXCEPTION when it
-    finds violations — a check that only SELECTs problems but never fails
+    finds violations: a check that only SELECTs problems but never fails
     is not a gate. Run with psql -v ON_ERROR_STOP=1 so the pipeline stops
     on the first failure.
 
@@ -107,7 +107,7 @@ BEGIN
     IF n > 0 THEN RAISE EXCEPTION 'S11 FAIL: % rows outside allowed gender set', n; END IF;
     RAISE NOTICE 'S11 PASS: ERP gender normalized';
 
-    -- S12: country decoded — no blanks, no leftover ISO codes
+    -- S12: country decoded, no blanks or leftover ISO codes
     SELECT count(*) INTO n FROM silver.erp_loc_a101
     WHERE cntry IS NULL OR TRIM(cntry) = '' OR cntry IN ('DE', 'US', 'USA');
     IF n > 0 THEN RAISE EXCEPTION 'S12 FAIL: % rows with blank or undecoded country', n; END IF;

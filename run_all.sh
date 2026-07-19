@@ -33,4 +33,4 @@ PSQL -f - < tests/quality_checks_silver.sql
 echo "==> 6/6 Quality gate: gold"
 PSQL -f - < tests/quality_checks_gold.sql
 
-echo "==> DONE — warehouse built and both quality gates green."
+echo "==> DONE: warehouse built and both quality gates green."

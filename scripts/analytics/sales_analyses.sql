@@ -3,7 +3,7 @@
 Analytics: Sales Analyses over the Gold Star Schema
 ===============================================================================
 Purpose:
-    Business questions answered directly on gold — the reason the warehouse
+    Business questions answered directly on gold, the reason the warehouse
     exists. Every query touches only gold views.
 ===============================================================================
 */

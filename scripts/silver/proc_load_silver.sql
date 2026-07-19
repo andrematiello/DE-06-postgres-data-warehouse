@@ -4,7 +4,7 @@ Stored Procedure: Load Silver Layer (Bronze -> Silver)
 ===============================================================================
 Purpose:
     Truncates the silver tables and reloads them from bronze, applying every
-    cleansing rule. Each rule is commented with the data problem it fixes —
+    cleansing rule. Each rule is commented with the data problem it fixes:
     the *why*, not just the *what*. Truncate-and-load keeps the procedure
     idempotent.
 

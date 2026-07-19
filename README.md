@@ -11,7 +11,7 @@ flowchart LR
         CRM[CRM extracts<br/>3 CSVs]
         ERP[ERP extracts<br/>3 CSVs]
     end
-    subgraph PostgreSQL 16 — Docker
+    subgraph PostgreSQL 16 (Docker)
         B[(bronze<br/>raw, as-is<br/>6 tables)]
         S[(silver<br/>cleansed, typed<br/>6 tables)]
         G[(gold<br/>star schema<br/>2 dims + 1 fact)]
@@ -185,7 +185,7 @@ cd DE-06-postgres-data-warehouse
 
 The script starts the container, waits for health, builds the three layers and runs both quality
 gates, stopping at the first error. Expected final line:
-`==> DONE — warehouse built and both quality gates green.` Then explore:
+`==> DONE: warehouse built and both quality gates green.` Then explore:
 
 ```bash
 docker compose exec warehouse psql -U dwh -d datawarehouse \

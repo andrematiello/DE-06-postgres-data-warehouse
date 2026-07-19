@@ -1,4 +1,4 @@
-# Data Catalog — Gold Layer
+# Data Catalog: Gold Layer
 
 The gold layer is the consumption interface of the warehouse: a star schema with two dimensions
 and one fact, exposed as views over silver. Query gold, not silver.

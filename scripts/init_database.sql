@@ -8,7 +8,7 @@ Purpose:
 
 WARNING:
     Re-running this script DROPS the three schemas and everything in them.
-    That is intentional — the whole warehouse rebuilds from the CSVs, so a
+    That is intentional: the whole warehouse rebuilds from the CSVs, so a
     from-scratch run is always possible. Do not point it at anything shared.
 ===============================================================================
 */

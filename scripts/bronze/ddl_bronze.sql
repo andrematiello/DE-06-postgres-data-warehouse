@@ -3,8 +3,8 @@
 DDL: Bronze Tables
 ===============================================================================
 Purpose:
-    One table per source CSV, typed as loosely as the raw data demands —
-    no cleansing here. Bronze is a faithful, auditable copy of the extracts.
+    One table per source CSV, typed as loosely as the raw data demands.
+    No cleansing here. Bronze is a faithful, auditable copy of the extracts.
     Dates that arrive as 8-digit integers (sales) stay integers; fixing them
     is silver's job.
 ===============================================================================
